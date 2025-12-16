@@ -1,0 +1,23 @@
+{
+  "heads": {
+    "sentiment": {
+      "classes": [
+        "negative",
+        "neutral",
+        "positive"
+      ]
+    },
+    "toxicity": {
+      "classes": [
+        "non_toxic",
+        "toxic"
+      ]
+    },
+    "spam": {
+      "classes": [
+        "not_spam",
+        "spam"
+      ]
+    }
+  }
+}
