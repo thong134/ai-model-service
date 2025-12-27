@@ -1,8 +1,101 @@
-destinationId,category,province,averageRating,description
-D001,beach,Da Nang,4.7,Beautiful My Khe Beach with white sand.
-D002,cultural,Hanoi,4.6,Historic Old Quarter walking tour.
-D003,nature,Quang Ninh,4.8,Ha Long Bay cruise among karst cliffs.
-D004,adventure,Quang Binh,4.5,Son Doong Cave expedition for thrill seekers.
-D005,food,Ho Chi Minh City,4.4,Street food night market exploration.
-D006,beach,Khanh Hoa,4.3,Nha Trang snorkeling and island hopping.
-D007,cultural,Hue,4.2,Imperial citadel heritage experience.
+destinationId,name,province,category,averageRating,favouriteTimes,latitude,longitude,description
+1,Destination 1,Da Nang,Beach,4.6,143,16.011216075004082,108.15551298861803,This is a beautiful place in Da Nang.
+2,Destination 2,Hue,Historical,4.4,440,16.489156070270262,107.55570352688417,This is a beautiful place in Hue.
+3,Destination 3,Quang Nam,Mountain,4.1,379,15.913360873397153,108.30550204008054,This is a beautiful place in Quang Nam.
+4,Destination 4,Hue,Forest,4.8,285,16.466670868959753,107.60208438458673,This is a beautiful place in Hue.
+5,Destination 5,Da Nang,Beach,4.9,87,16.077341644003155,108.2389904013486,This is a beautiful place in Da Nang.
+6,Destination 6,Hue,Temple,4.8,461,16.472504138865055,107.62464476784025,This is a beautiful place in Hue.
+7,Destination 7,Da Nang,Beach,4.1,273,16.099236736723157,108.16195500433068,This is a beautiful place in Da Nang.
+8,Destination 8,Quang Nam,Urban,3.6,72,15.919984768750682,108.31488780406649,This is a beautiful place in Quang Nam.
+9,Destination 9,Hue,Forest,4.1,466,16.47236439039694,107.57649199334129,This is a beautiful place in Hue.
+10,Destination 10,Quang Nam,Temple,4.6,311,15.872091443836132,108.35943655980758,This is a beautiful place in Quang Nam.
+11,Destination 11,Ho Chi Minh,Beach,3.4,353,10.857155276709943,106.65454479948298,This is a beautiful place in Ho Chi Minh.
+12,Destination 12,Quang Nam,Historical,3.6,148,15.88213330659163,108.3161398185632,This is a beautiful place in Quang Nam.
+13,Destination 13,Ho Chi Minh,Forest,3.2,287,10.850502687192543,106.6761927019709,This is a beautiful place in Ho Chi Minh.
+14,Destination 14,Da Nang,Temple,4.4,487,16.027975834493063,108.21144776717381,This is a beautiful place in Da Nang.
+15,Destination 15,Quang Nam,Urban,3.3,51,15.830726099013564,108.38307656522336,This is a beautiful place in Quang Nam.
+16,Destination 16,Hue,Urban,3.3,260,16.447051063844196,107.591683612007,This is a beautiful place in Hue.
+17,Destination 17,Quang Nam,Forest,4.5,53,15.838059457474104,108.32148798392959,This is a beautiful place in Quang Nam.
+18,Destination 18,Ha Noi,Historical,4.9,175,20.993853563751706,105.90330590045502,This is a beautiful place in Ha Noi.
+19,Destination 19,Quang Nam,Historical,4.4,211,15.893681667455464,108.3764922135254,This is a beautiful place in Quang Nam.
+20,Destination 20,Quang Nam,Forest,4.0,195,15.837535111327625,108.30137603037012,This is a beautiful place in Quang Nam.
+21,Destination 21,Ho Chi Minh,Beach,3.5,230,10.82059200121533,106.64542863442848,This is a beautiful place in Ho Chi Minh.
+22,Destination 22,Quang Nam,Historical,4.9,271,15.857303645565585,108.31437458724592,This is a beautiful place in Quang Nam.
+23,Destination 23,Ho Chi Minh,Mountain,3.8,363,10.833278477330996,106.60660542590028,This is a beautiful place in Ho Chi Minh.
+24,Destination 24,Da Nang,Temple,3.6,323,16.015340098783657,108.17341537715298,This is a beautiful place in Da Nang.
+25,Destination 25,Quang Nam,Urban,3.4,407,15.859066976677951,108.33638320633968,This is a beautiful place in Quang Nam.
+26,Destination 26,Ho Chi Minh,Historical,4.3,196,10.822680188447466,106.67165336535238,This is a beautiful place in Ho Chi Minh.
+27,Destination 27,Ha Noi,Urban,3.4,36,21.07510960304774,105.87752380875443,This is a beautiful place in Ha Noi.
+28,Destination 28,Hue,Forest,3.8,24,16.473980317889616,107.60698788100895,This is a beautiful place in Hue.
+29,Destination 29,Hue,Beach,4.5,49,16.431699521455005,107.54593185657126,This is a beautiful place in Hue.
+30,Destination 30,Quang Nam,Beach,3.3,83,15.918927464544671,108.30208878509295,This is a beautiful place in Quang Nam.
+31,Destination 31,Quang Nam,Urban,4.1,211,15.88198120966633,108.35449050726739,This is a beautiful place in Quang Nam.
+32,Destination 32,Da Nang,Mountain,3.5,351,16.091465455218092,108.19004032314727,This is a beautiful place in Da Nang.
+33,Destination 33,Hue,Historical,3.3,45,16.477473394397094,107.56948235768294,This is a beautiful place in Hue.
+34,Destination 34,Hue,Mountain,4.2,43,16.45209580009244,107.55270781934912,This is a beautiful place in Hue.
+35,Destination 35,Da Nang,Historical,3.5,224,16.072173075896387,108.16051169058568,This is a beautiful place in Da Nang.
+36,Destination 36,Quang Nam,Urban,3.3,320,15.91681251947036,108.28998199552447,This is a beautiful place in Quang Nam.
+37,Destination 37,Quang Nam,Beach,3.5,291,15.91645946170588,108.35304149248935,This is a beautiful place in Quang Nam.
+38,Destination 38,Da Nang,Urban,4.7,208,16.025457590446628,108.23737743118284,This is a beautiful place in Da Nang.
+39,Destination 39,Da Nang,Temple,3.9,409,16.089647337014757,108.22314032224621,This is a beautiful place in Da Nang.
+40,Destination 40,Quang Nam,Temple,4.5,421,15.906793008804595,108.31571023756422,This is a beautiful place in Quang Nam.
+41,Destination 41,Da Nang,Urban,4.1,417,16.015744468054937,108.15453042671744,This is a beautiful place in Da Nang.
+42,Destination 42,Hue,Historical,4.5,328,16.490703464259898,107.57010911685643,This is a beautiful place in Hue.
+43,Destination 43,Quang Nam,Historical,3.5,262,15.90686877351617,108.31633974317798,This is a beautiful place in Quang Nam.
+44,Destination 44,Ha Noi,Mountain,3.2,106,20.986881530158925,105.81804836688319,This is a beautiful place in Ha Noi.
+45,Destination 45,Quang Nam,Historical,4.9,165,15.91993733520032,108.33752388666404,This is a beautiful place in Quang Nam.
+46,Destination 46,Ho Chi Minh,Historical,3.3,155,10.776820569455404,106.64797704295245,This is a beautiful place in Ho Chi Minh.
+47,Destination 47,Da Nang,Temple,3.0,248,16.070867660941214,108.17298185113772,This is a beautiful place in Da Nang.
+48,Destination 48,Da Nang,Urban,4.8,150,16.07147985823737,108.21829311162209,This is a beautiful place in Da Nang.
+49,Destination 49,Ha Noi,Historical,4.4,158,21.00005101252234,105.8844187026431,This is a beautiful place in Ha Noi.
+50,Destination 50,Ha Noi,Mountain,3.4,404,21.060840542864184,105.84593658153929,This is a beautiful place in Ha Noi.
+51,Destination 51,Quang Nam,Beach,4.1,365,15.848246903514399,108.36250088554324,This is a beautiful place in Quang Nam.
+52,Destination 52,Da Nang,Urban,4.3,311,16.028574949038557,108.20912687273021,This is a beautiful place in Da Nang.
+53,Destination 53,Da Nang,Beach,4.1,332,16.09958778284076,108.22659822542994,This is a beautiful place in Da Nang.
+54,Destination 54,Da Nang,Temple,4.0,426,16.023027643080447,108.23182185196677,This is a beautiful place in Da Nang.
+55,Destination 55,Ho Chi Minh,Beach,3.4,92,10.867224957569483,106.65019713277121,This is a beautiful place in Ho Chi Minh.
+56,Destination 56,Ha Noi,Forest,3.2,428,21.017577707669975,105.86781748327975,This is a beautiful place in Ha Noi.
+57,Destination 57,Ho Chi Minh,Forest,4.9,272,10.82045635389956,106.60046585526236,This is a beautiful place in Ho Chi Minh.
+58,Destination 58,Ho Chi Minh,Mountain,3.6,226,10.837654533419824,106.59648754221347,This is a beautiful place in Ho Chi Minh.
+59,Destination 59,Da Nang,Forest,4.6,290,16.076936266592856,108.17709039473709,This is a beautiful place in Da Nang.
+60,Destination 60,Hue,Temple,3.2,271,16.497255435922064,107.62261573950087,This is a beautiful place in Hue.
+61,Destination 61,Da Nang,Beach,3.3,156,16.07715115593923,108.15648297738335,This is a beautiful place in Da Nang.
+62,Destination 62,Ha Noi,Forest,4.0,63,21.07576302704186,105.82124874707107,This is a beautiful place in Ha Noi.
+63,Destination 63,Ho Chi Minh,Beach,3.7,458,10.774965129258584,106.64311639564396,This is a beautiful place in Ho Chi Minh.
+64,Destination 64,Quang Nam,Urban,4.0,500,15.860387167417644,108.32922954152387,This is a beautiful place in Quang Nam.
+65,Destination 65,Ha Noi,Forest,4.2,450,20.99742496876191,105.85687171538859,This is a beautiful place in Ha Noi.
+66,Destination 66,Da Nang,Urban,3.7,17,16.069613651455473,108.19386695725592,This is a beautiful place in Da Nang.
+67,Destination 67,Hue,Forest,4.7,216,16.500316973863306,107.54400804342967,This is a beautiful place in Hue.
+68,Destination 68,Da Nang,Temple,4.9,25,16.015287836377137,108.18256645439506,This is a beautiful place in Da Nang.
+69,Destination 69,Ho Chi Minh,Urban,3.7,433,10.86143270479044,106.65885103494256,This is a beautiful place in Ho Chi Minh.
+70,Destination 70,Ha Noi,Beach,4.5,407,21.00408158801133,105.85347447457917,This is a beautiful place in Ha Noi.
+71,Destination 71,Ha Noi,Beach,4.5,226,21.020566740392773,105.8315371105398,This is a beautiful place in Ha Noi.
+72,Destination 72,Ho Chi Minh,Temple,3.4,405,10.843882554834293,106.59798744458854,This is a beautiful place in Ho Chi Minh.
+73,Destination 73,Hue,Historical,3.3,378,16.447865703389848,107.6082997518606,This is a beautiful place in Hue.
+74,Destination 74,Da Nang,Forest,4.7,256,16.062983431652153,108.24840550994465,This is a beautiful place in Da Nang.
+75,Destination 75,Da Nang,Urban,3.1,486,16.075637578367914,108.22127439773242,This is a beautiful place in Da Nang.
+76,Destination 76,Ha Noi,Urban,3.5,186,21.028621753961943,105.83999259257712,This is a beautiful place in Ha Noi.
+77,Destination 77,Quang Nam,Historical,3.6,371,15.8858201297689,108.35995435272527,This is a beautiful place in Quang Nam.
+78,Destination 78,Ho Chi Minh,Beach,4.8,409,10.867424921804215,106.66819356668302,This is a beautiful place in Ho Chi Minh.
+79,Destination 79,Hue,Forest,3.8,243,16.487895155971326,107.57672409000752,This is a beautiful place in Hue.
+80,Destination 80,Ha Noi,Beach,5.0,31,21.015943182833134,105.82528518674397,This is a beautiful place in Ha Noi.
+81,Destination 81,Quang Nam,Beach,3.5,336,15.879171231944012,108.36381345629334,This is a beautiful place in Quang Nam.
+82,Destination 82,Ha Noi,Historical,3.7,104,20.994680833256826,105.85455457870337,This is a beautiful place in Ha Noi.
+83,Destination 83,Da Nang,Beach,4.3,390,16.022828642165187,108.24139491522571,This is a beautiful place in Da Nang.
+84,Destination 84,Quang Nam,Mountain,4.2,462,15.88721190728376,108.37898521815518,This is a beautiful place in Quang Nam.
+85,Destination 85,Ho Chi Minh,Mountain,4.4,23,10.83746386139876,106.66566676100265,This is a beautiful place in Ho Chi Minh.
+86,Destination 86,Hue,Beach,4.5,468,16.449583847639463,107.63282788916048,This is a beautiful place in Hue.
+87,Destination 87,Quang Nam,Beach,3.2,226,15.845647372917524,108.38371769341715,This is a beautiful place in Quang Nam.
+88,Destination 88,Quang Nam,Beach,4.2,241,15.892942048264134,108.37837492867529,This is a beautiful place in Quang Nam.
+89,Destination 89,Da Nang,Historical,4.7,390,16.057523648757545,108.25111191804571,This is a beautiful place in Da Nang.
+90,Destination 90,Quang Nam,Forest,3.8,153,15.856564223103197,108.36166199270772,This is a beautiful place in Quang Nam.
+91,Destination 91,Hue,Historical,4.6,52,16.425017592610086,107.62883250225804,This is a beautiful place in Hue.
+92,Destination 92,Ha Noi,Historical,4.1,296,21.013738583223013,105.87126990074077,This is a beautiful place in Ha Noi.
+93,Destination 93,Quang Nam,Urban,3.1,361,15.89008334058051,108.37000248273665,This is a beautiful place in Quang Nam.
+94,Destination 94,Da Nang,Beach,4.6,89,16.0333361846817,108.22328100193614,This is a beautiful place in Da Nang.
+95,Destination 95,Ha Noi,Urban,4.5,433,21.075858352756477,105.81616065725119,This is a beautiful place in Ha Noi.
+96,Destination 96,Ha Noi,Historical,3.6,67,21.013666028135173,105.84231076887545,This is a beautiful place in Ha Noi.
+97,Destination 97,Quang Nam,Urban,3.0,241,15.843471300743571,108.3153656303471,This is a beautiful place in Quang Nam.
+98,Destination 98,Ho Chi Minh,Mountain,3.8,337,10.851827553593427,106.65267586353828,This is a beautiful place in Ho Chi Minh.
+99,Destination 99,Hue,Beach,3.6,4,16.506024367139954,107.59999419654197,This is a beautiful place in Hue.
+100,Destination 100,Ho Chi Minh,Temple,3.5,373,10.867285384428888,106.58965644338555,This is a beautiful place in Ho Chi Minh.

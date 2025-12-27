@@ -1,28 +1,15 @@
 from __future__ import annotations
 
-from flask import Flask
-from flasgger import Swagger
-
-from .api import SWAGGER_TEMPLATE, register_routes
-from .http_api import create_fastapi_app
-from .moderation.config import AppConfig
+# Clean exports for the new AI service structure
 from .moderation.service import ReviewService
-from .itinerary.travel_service import RoutePlan, TravelService
-
-
-def create_app(config: AppConfig | None = None) -> Flask:
-    app = Flask(__name__)
-    Swagger(app, template=SWAGGER_TEMPLATE)
-    service = ReviewService(config)
-    register_routes(app, service)
-    return app
-
+from .recommendation.destination import DestinationRecommender, train_model as load_dest_model
+from .recommendation.route import RouteRecommender
+from .vision.classifier import PlaceClassifier
 
 __all__ = [
-    "create_app",
-    "create_fastapi_app",
-    "AppConfig",
     "ReviewService",
-    "TravelService",
-    "RoutePlan",
+    "DestinationRecommender",
+    "load_dest_model",
+    "RouteRecommender",
+    "PlaceClassifier",
 ]
