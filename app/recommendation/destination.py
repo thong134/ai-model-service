@@ -91,6 +91,91 @@ class DestinationRecommender:
             
         return recommendations
 
+    def inspect(
+        self,
+        user_hobbies: List[str],
+        user_favorites: List[str],
+        province: Optional[str] = None,
+        top_n: int = 10
+    ) -> Dict[str, object]:
+        
+        candidates = self.destinations.copy()
+        
+        if province:
+            candidates = candidates[candidates['province'].str.lower() == province.lower()]
+            
+        if candidates.empty:
+            return {"error": "No candidates found for criteria", "debug_info": { "province": province }}
+
+        # Recalculate component scores (same as recommend)
+        candidates['hobby_match'] = candidates['category'].apply(
+            lambda x: 1.0 if x in user_hobbies else 0.0
+        )
+        candidates['is_user_fav'] = candidates['destinationId'].astype(str).isin(user_favorites).astype(float)
+
+        w_hobby = self.config.get('w_hobby', 0.4)
+        w_social = self.config.get('w_social', 0.2)
+        w_rating = self.config.get('w_rating', 0.2)
+        w_personal = self.config.get('w_personal', 0.2)
+
+        candidates['score_hobby'] = w_hobby * candidates['hobby_match']
+        candidates['score_social'] = w_social * candidates['norm_favorites'] 
+        candidates['score_rating'] = w_rating * candidates['norm_rating']
+        candidates['score_personal'] = w_personal * candidates['is_user_fav']
+
+        candidates['score'] = (
+            candidates['score_hobby'] +
+            candidates['score_social'] +
+            candidates['score_rating'] + 
+            candidates['score_personal']
+        )
+
+        top_candidates = candidates.sort_values('score', ascending=False).head(top_n)
+        
+        recommendations = []
+        for _, row in top_candidates.iterrows():
+            recommendations.append({
+                "destinationId": str(row['destinationId']),
+                "name": row['name'],
+                "category": row['category'],
+                "total_score": float(row['score']),
+                "components": {
+                    "hobby": {
+                        "raw_match": bool(row['hobby_match']),
+                        "weight": w_hobby,
+                        "weighted_score": float(row['score_hobby'])
+                    },
+                    "social": {
+                        "norm_value": float(row['norm_favorites']),
+                        "weight": w_social,
+                        "weighted_score": float(row['score_social'])
+                    },
+                    "rating": {
+                        "norm_value": float(row['norm_rating']),
+                        "weight": w_rating,
+                        "weighted_score": float(row['score_rating'])
+                    },
+                    "personal": {
+                        "is_fav": bool(row['is_user_fav']),
+                        "weight": w_personal,
+                        "weighted_score": float(row['score_personal'])
+                    }
+                }
+            })
+            
+        return {
+            "debug_info": {
+                "inputs": {
+                    "hobbies": user_hobbies,
+                    "favorites": user_favorites,
+                    "province": province
+                },
+                "weights_config": self.config
+            },
+            "recommendations": recommendations,
+            "candidates_count": len(candidates)
+        }
+
 def train_model(
     destinations_path: str | Path = Path("data/destinations.csv"),
     weights: Optional[Dict[str, float]] = None

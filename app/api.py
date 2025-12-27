@@ -96,6 +96,25 @@ def recommend_destinations():
     )
     return jsonify(results)
 
+@app.route('/recommend/destinations/inspect', methods=['POST'])
+def inspect_destinations():
+    if not dest_model:
+        return jsonify({"error": "Destination model not available"}), 503
+        
+    data = request.json
+    hobbies = data.get('hobbies', [])
+    favorites = data.get('favorites', [])
+    province = data.get('province')
+    top_n = data.get('limit', 10)
+    
+    results = dest_model.inspect(
+        user_hobbies=hobbies, 
+        user_favorites=favorites, 
+        province=province,
+        top_n=top_n
+    )
+    return jsonify(results)
+
 @app.route('/recommend/route', methods=['POST'])
 def recommend_route():
     if not route_model:
