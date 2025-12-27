@@ -3,8 +3,7 @@
     "sentiment": {
       "classes": [
         "negative",
-        "neutral",
-        "positive"
+        "neutral"
       ]
     },
     "toxicity": {

@@ -1,3 +1,5 @@
+from __future__ import annotations
+# Trigger reload
 from flask import Flask, request, jsonify
 import os
 import requests

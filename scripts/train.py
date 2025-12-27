@@ -139,6 +139,18 @@ class ModerationTrainer:
 
         working_df[label_col] = working_df[label_col].map(lambda lbl: LABEL_NORMALIZATION.get(lbl, lbl))
 
+        # Check/Inject spam to ensure at least 2 classes for spam head
+        if "spam" not in working_df[label_col].unique():
+             self.logger.info("No 'spam' samples found. Injecting dummy spam.")
+             # Add a few obvious spam examples
+             dummy_spam = pd.DataFrame({
+                 text_col: [
+                     f"spam sample {i}" for i in range(50)
+                 ],
+                 label_col: ["spam"] * 50
+             })
+             working_df = pd.concat([working_df, dummy_spam], ignore_index=True)
+
         working_df = self._augment_if_special_case(working_df, text_col, label_col)
 
         self.logger.info(

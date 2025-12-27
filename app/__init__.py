@@ -4,7 +4,10 @@ from __future__ import annotations
 from .moderation.service import ReviewService
 from .recommendation.destination import DestinationRecommender, train_model as load_dest_model
 from .recommendation.route import RouteRecommender
-from .vision.classifier import PlaceClassifier
+try:
+    from .vision.classifier import PlaceClassifier
+except ImportError:
+    PlaceClassifier = None
 
 __all__ = [
     "ReviewService",
