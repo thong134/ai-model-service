@@ -18,6 +18,8 @@ def train_classifier(data_dir: str, epochs: int = 5, batch_size: int = 32, learn
         'train': transforms.Compose([
             transforms.RandomResizedCrop(224),
             transforms.RandomHorizontalFlip(),
+            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2), # Add color robustness
+            transforms.RandomRotation(15), # Add rotation robustness
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ]),
@@ -29,23 +31,29 @@ def train_classifier(data_dir: str, epochs: int = 5, batch_size: int = 32, learn
         ]),
     }
 
-    # Check if 'train' and 'val' folders exist, otherwise assume flat structure and split?
-    # For simplicity, we assume standard ImageFolder structure: data/image_class/image.jpg
-    # And we'll just use it all for training if 'train' subdir doesn't exist.
+    # Use ImageFolder for data loading
+    full_dataset = datasets.ImageFolder(data_dir, data_transforms['train'])
     
+    # Split into train/val if not already split
     if os.path.exists(os.path.join(data_dir, 'train')):
         image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x]) for x in ['train', 'val']}
     else:
-        print("No train/val split found. Using all data for training.")
-        full_dataset = datasets.ImageFolder(data_dir, data_transforms['train'])
-        image_datasets = {'train': full_dataset}
+        print("Splitting data into 80/20 train/val...")
+        train_size = int(0.8 * len(full_dataset))
+        val_size = len(full_dataset) - train_size
+        train_ds, val_ds = torch.utils.data.random_split(full_dataset, [train_size, val_size])
+        # Re-apply val transforms to val_ds (since random_split keeps original transforms)
+        val_ds.dataset.transform = data_transforms['val']
+        image_datasets = {'train': train_ds, 'val': val_ds}
         
     dataloaders = {
-        x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4)
+        x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=0) # num_workers=0 for stability on windows
         for x in image_datasets
     }
     
-    class_names = image_datasets['train'].classes
+    # Handle the fact that train_ds might be a Subset
+    base_dataset = full_dataset if 'train' not in image_datasets or isinstance(image_datasets['train'], torch.utils.data.Subset) else image_datasets['train']
+    class_names = getattr(base_dataset, 'classes', full_dataset.classes)
     num_classes = len(class_names)
     print(f"Classes found: {class_names}")
 
@@ -53,16 +61,23 @@ def train_classifier(data_dir: str, epochs: int = 5, batch_size: int = 32, learn
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.DEFAULT)
     
-    # Freeze layers
+    # Fine-tuning: Freeze all but last few layers
     for param in model.parameters():
         param.requires_grad = False
+    
+    # Unfreeze the last 3 convolutional blocks for fine-tuning
+    for layer in model.features[14:]:
+        for param in layer.parameters():
+            param.requires_grad = True
         
     # Replace head
     model.classifier[1] = nn.Linear(model.last_channel, num_classes)
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.classifier.parameters(), lr=learning_rate, momentum=0.9)
+    # Optimize head AND unfrozen base layers
+    trainable_params = [p for p in model.parameters() if p.requires_grad]
+    optimizer = optim.SGD(trainable_params, lr=learning_rate, momentum=0.9, weight_decay=1e-4)
 
     # 3. Training Loop
     for epoch in range(epochs):
@@ -119,7 +134,7 @@ def train_classifier(data_dir: str, epochs: int = 5, batch_size: int = 32, learn
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str, default='data/images', help='Path to image data')
-    parser.add_argument('--epochs', type=int, default=5)
+    parser.add_argument('--epochs', type=int, default=10)
     args = parser.parse_args()
     
     train_classifier(args.data_dir, args.epochs)

@@ -25,56 +25,149 @@ class DestinationRecommender:
         else:
             self.destinations['norm_favorites'] = 0.0
             self.destinations['norm_rating'] = 0.0
+            
+        # Load TF-IDF artifacts
+        import joblib
+        try:
+            self.vectorizer = joblib.load('artifacts/dest_tfidf_vectorizer.joblib')
+            self.tfidf_matrix = joblib.load('artifacts/dest_tfidf_matrix.joblib')
+            self.dest_ids = pd.read_csv('artifacts/dest_ids.csv')['destinationId'].astype(str).tolist()
+            print("  ✓ Hybrid Recommendation Artifacts loaded")
+        except Exception as e:
+            print(f"  ⚠ TF-IDF artifacts not loaded: {e}")
+            self.vectorizer = None
+            self.tfidf_matrix = None
 
     def recommend(
         self,
         user_hobbies: List[str],
         user_favorites: List[str], # List of favorite destination IDs
+        history_profile: Dict[str, int] = None, # Category frequencies from TravelRoute
+        engagement_profile: Dict[str, int] = None, # Category frequencies from Feedbacks
         province: Optional[str] = None,
-        top_n: int = 10
+        top_n: int = 50,
+        offset: int = 0
     ) -> List[Dict[str, object]]:
         
+        # Mapping Vietnamese/Hobby terms to CSV Categories
+        # CSV Categories are: Beach, Historical, Mountain, Forest, Temple, Urban
+        category_map = {
+            'Thiên nhiên': ['Forest', 'Mountain', 'Beach'],
+            'Văn hóa': ['Historical', 'Temple'],
+            'Lịch sử': ['Historical'],
+            'Giải trí': ['Urban'],
+            'Công trình': ['Temple', 'Urban'],
+            'Biển': ['Beach'],
+            'Núi': ['Mountain'],
+            # Hobbies
+            'Adventure': ['Mountain', 'Forest'],
+            'Relaxation': ['Beach', 'Forest'],
+            'Culture&History': ['Historical', 'Temple'],
+            'Entertainment': ['Urban'],
+            'Nature': ['Forest', 'Mountain', 'Beach'],
+            'Beach&Islands': ['Beach'],
+            'Mountain&Forest': ['Mountain', 'Forest'],
+            'Photography': ['Beach', 'Mountain', 'Historical'],
+            'Foods&Drinks': ['Urban']
+        }
+
+        # Normalize profiles using the map
+        def normalize_profile(profile):
+            if not profile: return {}
+            normalized = {}
+            for cat_name, count in profile.items():
+                mapped_cats = category_map.get(cat_name, [cat_name])
+                for mc in mapped_cats:
+                    normalized[mc] = normalized.get(mc, 0) + (count / len(mapped_cats))
+            return normalized
+
+        norm_history = normalize_profile(history_profile)
+        norm_engagement = normalize_profile(engagement_profile)
+        
+        # Map user hobbies to target categories
+        target_categories = set()
+        for h in user_hobbies:
+            for mc in category_map.get(h, [h]):
+                target_categories.add(mc)
+
         candidates = self.destinations.copy()
         
         if province:
-             # Case-insensitive filtering
             candidates = candidates[candidates['province'].str.lower() == province.lower()]
             
         if candidates.empty:
             return []
 
-        # 1. Hobby Match Score (0 or 1)
-        # Check if destination category is in user hobbies
-        # Assuming 'category' column exists and user_hobbies are categories
-        candidates['hobby_match'] = candidates['category'].apply(
-            lambda x: 1.0 if x in user_hobbies else 0.0
+        # 1. Hobby Match Score
+        candidates['score_hobby'] = candidates['category'].apply(
+            lambda x: 1.0 if x in target_categories else 0.0
         )
 
-        # 2. Favorite Score (Social Proof) -> Already normalized as 'norm_favorites'
+        # 2. History & Engagement Profile Scoring
+        def get_profile_score(cat, profile):
+            if not profile: return 0.0
+            total = sum(profile.values())
+            if total == 0: return 0.0
+            return profile.get(cat, 0) / total
 
-        # 3. Rating Score (Quality) -> Already normalized as 'norm_rating'
-        
-        # 4. User Personal Favorite Boost
-        # If user already favorited this place, maybe boost it? 
-        # OR usually we recommend new things. 
-        # Let's say we recommend "suitable" things. If they favorited it, it's suitable.
+        candidates['score_history'] = candidates['category'].apply(
+            lambda x: get_profile_score(x, norm_history)
+        )
+        candidates['score_engagement'] = candidates['category'].apply(
+            lambda x: get_profile_score(x, norm_engagement)
+        )
+
+        # 3. Personal Favorite Boost
         candidates['is_user_fav'] = candidates['destinationId'].astype(str).isin(user_favorites).astype(float)
 
-        # Calculate Final Weighted Score
-        w_hobby = self.config.get('w_hobby', 0.4)
-        w_social = self.config.get('w_social', 0.2) # General popularity
-        w_rating = self.config.get('w_rating', 0.2) # Quality
-        w_personal = self.config.get('w_personal', 0.2) # Personal preference
-
-        candidates['score'] = (
-            w_hobby * candidates['hobby_match'] +
-            w_social * candidates['norm_favorites'] +
-            w_rating * candidates['norm_rating'] + 
-            w_personal * candidates['is_user_fav']
+        # 4. Location Correlation
+        fav_provinces = self.destinations[
+            self.destinations['destinationId'].astype(str).isin(user_favorites)
+        ]['province'].unique()
+        candidates['score_location'] = candidates['province'].apply(
+            lambda x: 1.0 if x in fav_provinces else 0.0
         )
 
-        # Sort and return
-        candidates = candidates.sort_values('score', ascending=False).head(top_n)
+        # 5. TF-IDF Similarity
+        candidates['score_tfidf'] = 0.0
+        if self.vectorizer and self.tfidf_matrix is not None:
+            # Better Interest Text: Use target categories + hobbies
+            interest_text = " ".join(list(target_categories) + user_hobbies)
+            if history_profile:
+                 # Original Vietnamese terms might be in descriptions too
+                interest_text += " " + " ".join(history_profile.keys())
+            
+            if interest_text.strip():
+                user_vec = self.vectorizer.transform([interest_text])
+                from sklearn.metrics.pairwise import cosine_similarity
+                similarities = cosine_similarity(user_vec, self.tfidf_matrix).flatten()
+                sim_map = dict(zip(self.dest_ids, similarities))
+                candidates['score_tfidf'] = candidates['destinationId'].astype(str).map(sim_map).fillna(0.0)
+
+        # Weights (V4.1 - Further boost Behavioral & Intent)
+        w_hobby = 0.1
+        w_history = 0.35 # +0.05
+        w_engagement = 0.25 # +0.05
+        w_personal = 0.4 # +0.15 (Makes favorite jump to top instantly)
+        w_tfidf = 0.1
+        w_location = 0.1 # +0.05
+
+        candidates['score'] = (
+            w_hobby * candidates['score_hobby'] +
+            w_history * candidates['score_history'] +
+            w_engagement * candidates['score_engagement'] +
+            w_personal * candidates['is_user_fav'] +
+            w_tfidf * candidates['score_tfidf'] +
+            w_location * candidates['score_location']
+        )
+
+        # Sort and return with stable tie-breaker
+        candidates = candidates.sort_values(['score', 'destinationId'], ascending=[False, True])
+        
+        # Apply pagination
+        candidates = candidates.iloc[offset : offset + top_n]
+        
+        recommendations = []
         
         recommendations = []
         for _, row in candidates.iterrows():
@@ -83,9 +176,11 @@ class DestinationRecommender:
                 "name": row['name'],
                 "score": float(row['score']),
                 "reason": {
-                    "hobby_match": bool(row['hobby_match']),
-                    "popularity": float(row['norm_favorites']),
-                    "rating": float(row['averageRating'])
+                    "hobby_match": bool(row['score_hobby'] > 0),
+                    "history_match": float(row['score_history']),
+                    "engagement_match": float(row['score_engagement']),
+                    "is_favorite": bool(row['is_user_fav']),
+                    "semantic_score": float(row['score_tfidf'])
                 }
             })
             
@@ -95,10 +190,50 @@ class DestinationRecommender:
         self,
         user_hobbies: List[str],
         user_favorites: List[str],
+        history_profile: Dict[str, int] = None,
+        engagement_profile: Dict[str, int] = None,
         province: Optional[str] = None,
-        top_n: int = 10
+        top_n: int = 50,
+        offset: int = 0
     ) -> Dict[str, object]:
         
+        # Consistent mapping with recommend()
+        category_map = {
+            'Thiên nhiên': ['Forest', 'Mountain', 'Beach'],
+            'Văn hóa': ['Historical', 'Temple'],
+            'Lịch sử': ['Historical'],
+            'Giải trí': ['Urban'],
+            'Công trình': ['Temple', 'Urban'],
+            'Biển': ['Beach'],
+            'Núi': ['Mountain'],
+            'Adventure': ['Mountain', 'Forest'],
+            'Relaxation': ['Beach', 'Forest'],
+            'Culture&History': ['Historical', 'Temple'],
+            'Entertainment': ['Urban'],
+            'Nature': ['Forest', 'Mountain', 'Beach'],
+            'Beach&Islands': ['Beach'],
+            'Mountain&Forest': ['Mountain', 'Forest'],
+            'Photography': ['Beach', 'Mountain', 'Historical'],
+            'Foods&Drinks': ['Urban']
+        }
+
+        def normalize_profile(profile):
+            if not profile: return {}
+            normalized = {}
+            for cat_name, count in profile.items():
+                mapped_cats = category_map.get(cat_name, [cat_name])
+                for mc in mapped_cats:
+                    normalized[mc] = normalized.get(mc, 0) + (count / len(mapped_cats))
+            return normalized
+
+        norm_history = normalize_profile(history_profile)
+        norm_engagement = normalize_profile(engagement_profile)
+        
+        target_categories = set()
+        for h in user_hobbies:
+            for mc in category_map.get(h, [h]):
+                target_categories.add(mc)
+
         candidates = self.destinations.copy()
         
         if province:
@@ -107,30 +242,72 @@ class DestinationRecommender:
         if candidates.empty:
             return {"error": "No candidates found for criteria", "debug_info": { "province": province }}
 
-        # Recalculate component scores (same as recommend)
-        candidates['hobby_match'] = candidates['category'].apply(
-            lambda x: 1.0 if x in user_hobbies else 0.0
+        # Recalculate component scores
+        candidates['score_hobby'] = candidates['category'].apply(
+            lambda x: 1.0 if x in target_categories else 0.0
+        )
+        
+        def get_profile_score(cat, profile):
+            if not profile: return 0.0
+            total = sum(profile.values())
+            if total == 0: return 0.0
+            return profile.get(cat, 0) / total
+
+        candidates['score_history'] = candidates['category'].apply(
+            lambda x: get_profile_score(x, norm_history)
+        )
+        candidates['score_engagement'] = candidates['category'].apply(
+            lambda x: get_profile_score(x, norm_engagement)
         )
         candidates['is_user_fav'] = candidates['destinationId'].astype(str).isin(user_favorites).astype(float)
-
-        w_hobby = self.config.get('w_hobby', 0.4)
-        w_social = self.config.get('w_social', 0.2)
-        w_rating = self.config.get('w_rating', 0.2)
-        w_personal = self.config.get('w_personal', 0.2)
-
-        candidates['score_hobby'] = w_hobby * candidates['hobby_match']
-        candidates['score_social'] = w_social * candidates['norm_favorites'] 
-        candidates['score_rating'] = w_rating * candidates['norm_rating']
-        candidates['score_personal'] = w_personal * candidates['is_user_fav']
-
-        candidates['score'] = (
-            candidates['score_hobby'] +
-            candidates['score_social'] +
-            candidates['score_rating'] + 
-            candidates['score_personal']
+        
+        fav_provinces = self.destinations[
+            self.destinations['destinationId'].astype(str).isin(user_favorites)
+        ]['province'].unique()
+        candidates['score_location'] = candidates['province'].apply(
+            lambda x: 1.0 if x in fav_provinces else 0.0
         )
 
-        top_candidates = candidates.sort_values('score', ascending=False).head(top_n)
+        candidates['score_tfidf'] = 0.0
+        if self.vectorizer and self.tfidf_matrix is not None:
+             interest_text = " ".join(list(target_categories) + user_hobbies)
+             if history_profile:
+                interest_text += " " + " ".join(history_profile.keys())
+            
+             if interest_text.strip():
+                user_vec = self.vectorizer.transform([interest_text])
+                from sklearn.metrics.pairwise import cosine_similarity
+                similarities = cosine_similarity(user_vec, self.tfidf_matrix).flatten()
+                sim_map = dict(zip(self.dest_ids, similarities))
+                candidates['score_tfidf'] = candidates['destinationId'].astype(str).map(sim_map).fillna(0.0)
+
+        # Weights (V4.1)
+        w_hobby = 0.1
+        w_history = 0.35
+        w_engagement = 0.25
+        w_personal = 0.4
+        w_tfidf = 0.1
+        w_location = 0.1
+
+        candidates['score_hobby_weighted'] = w_hobby * candidates['score_hobby']
+        candidates['score_history_weighted'] = w_history * candidates['score_history']
+        candidates['score_engagement_weighted'] = w_engagement * candidates['score_engagement']
+        candidates['score_personal_weighted'] = w_personal * candidates['is_user_fav']
+        candidates['score_tfidf_weighted'] = w_tfidf * candidates['score_tfidf']
+        candidates['score_location_weighted'] = w_location * candidates['score_location']
+
+        candidates['score'] = (
+            candidates['score_hobby_weighted'] +
+            candidates['score_history_weighted'] +
+            candidates['score_engagement_weighted'] +
+            candidates['score_personal_weighted'] +
+            candidates['score_tfidf_weighted'] +
+            candidates['score_location_weighted']
+        )
+
+        # Sort and paginate
+        candidates = candidates.sort_values(['score', 'destinationId'], ascending=[False, True])
+        top_candidates = candidates.iloc[offset : offset + top_n]
         
         recommendations = []
         for _, row in top_candidates.iterrows():
@@ -141,24 +318,34 @@ class DestinationRecommender:
                 "total_score": float(row['score']),
                 "components": {
                     "hobby": {
-                        "raw_match": bool(row['hobby_match']),
+                        "raw_match": bool(row['score_hobby'] > 0),
                         "weight": w_hobby,
-                        "weighted_score": float(row['score_hobby'])
+                        "weighted_score": float(row['score_hobby_weighted'])
                     },
-                    "social": {
-                        "norm_value": float(row['norm_favorites']),
-                        "weight": w_social,
-                        "weighted_score": float(row['score_social'])
+                    "history": {
+                        "freq": float(row['score_history']),
+                        "weight": w_history,
+                        "weighted_score": float(row['score_history_weighted'])
                     },
-                    "rating": {
-                        "norm_value": float(row['norm_rating']),
-                        "weight": w_rating,
-                        "weighted_score": float(row['score_rating'])
+                    "engagement": {
+                        "freq": float(row['score_engagement']),
+                        "weight": w_engagement,
+                        "weighted_score": float(row['score_engagement_weighted'])
                     },
                     "personal": {
                         "is_fav": bool(row['is_user_fav']),
                         "weight": w_personal,
-                        "weighted_score": float(row['score_personal'])
+                        "weighted_score": float(row['score_personal_weighted'])
+                    },
+                    "semantic": {
+                        "tfidf_sim": float(row['score_tfidf']),
+                        "weight": w_tfidf,
+                        "weighted_score": float(row['score_tfidf_weighted'])
+                    },
+                    "location": {
+                        "matched_fav_province": bool(row['score_location'] > 0),
+                        "weight": w_location,
+                        "weighted_score": float(row['score_location_weighted'])
                     }
                 }
             })
@@ -168,9 +355,18 @@ class DestinationRecommender:
                 "inputs": {
                     "hobbies": user_hobbies,
                     "favorites": user_favorites,
+                    "history_profile": history_profile,
+                    "engagement_profile": engagement_profile,
                     "province": province
                 },
-                "weights_config": self.config
+                "weights_config": {
+                    "w_hobby": w_hobby,
+                    "w_history": w_history,
+                    "w_engagement": w_engagement,
+                    "w_personal": w_personal,
+                    "w_tfidf": w_tfidf,
+                    "w_location": w_location
+                }
             },
             "recommendations": recommendations,
             "candidates_count": len(candidates)

@@ -85,14 +85,20 @@ def recommend_destinations():
     data = request.json
     hobbies = data.get('hobbies', [])
     favorites = data.get('favorites', [])
+    history_profile = data.get('history_profile', {})
+    engagement_profile = data.get('engagement_profile', {})
     province = data.get('province')
-    top_n = data.get('limit', 10)
+    top_n = data.get('limit', 50)
+    offset = data.get('offset', 0)
     
     results = dest_model.recommend(
         user_hobbies=hobbies, 
         user_favorites=favorites, 
+        history_profile=history_profile,
+        engagement_profile=engagement_profile,
         province=province,
-        top_n=top_n
+        top_n=top_n,
+        offset=offset
     )
     return jsonify(results)
 
@@ -104,14 +110,20 @@ def inspect_destinations():
     data = request.json
     hobbies = data.get('hobbies', [])
     favorites = data.get('favorites', [])
+    history_profile = data.get('history_profile', {})
+    engagement_profile = data.get('engagement_profile', {})
     province = data.get('province')
-    top_n = data.get('limit', 10)
+    top_n = data.get('limit', 50)
+    offset = data.get('offset', 0)
     
     results = dest_model.inspect(
         user_hobbies=hobbies, 
         user_favorites=favorites, 
+        history_profile=history_profile,
+        engagement_profile=engagement_profile,
         province=province,
-        top_n=top_n
+        top_n=top_n,
+        offset=offset
     )
     return jsonify(results)
 

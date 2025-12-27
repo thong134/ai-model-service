@@ -1,0 +1,1 @@
+﻿destinationId,name,province,category,averageRating,favouriteTimes,latitude,longitude,description
