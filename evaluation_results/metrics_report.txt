@@ -1,0 +1,75 @@
+AI SERVICES EVALUATION REPORT
+==============================
+
+Starting AI Services Evaluation...
+
+==================================================
+ EVALUATION 1: MODERATION & SENTIMENT ANALYSIS
+==================================================
+Running classification on 90 samples (30 each for Approve, Reject, Neutral)...
+
+--- Moderation Decision Classification Report ---
+              precision    recall  f1-score   support
+
+     Approve       0.60      0.87      0.71        30
+     Neutral       0.62      0.47      0.54        32
+      Reject       0.96      0.80      0.87        30
+
+    accuracy                           0.71        92
+   macro avg       0.73      0.71      0.71        92
+weighted avg       0.73      0.71      0.70        92
+
+Accuracy Score: 0.707
+
+==================================================
+ EVALUATION 2: DESTINATION RECOMMENDATION (Suitability Analysis)
+==================================================
+Analyzing suitability (overlap) for 50 simulations...
+
+--- Recommendation Suitability Report (Top 10) ---
+User Profile: Beach & Relax   | Average Suitability: 1.00
+User Profile: City & Food     | Average Suitability: 1.00
+User Profile: History Buff    | Average Suitability: 1.00
+User Profile: Nature Lover    | Average Suitability: 1.00
+
+Overall Recommendation Accuracy (Suitability): 1.000
+
+==================================================
+ EVALUATION 3: ROUTE RECOMMENDATION (Suitability Analysis)
+==================================================
+Simulating 20 route generation requests...
+
+--- Route Suitability Report ---
+Profile: Da Nang Fun     | Suitability: 0.94
+Profile: Hanoi Explorer  | Suitability: 0.94
+Profile: Hue Cultural    | Suitability: 0.98
+Profile: Saigon Urban    | Suitability: 0.95
+
+Overall Route Suitability: 0.953
+
+==================================================
+ EVALUATION 4: CHATBOT (VISION CAPABILITY)
+==================================================
+Evaluating images in data/images_test (cap 100 per class)...
+Processing class 'architecture_site': 100 images
+Processing class 'beach': 100 images
+Processing class 'forest': 100 images
+Processing class 'mountain': 100 images
+Processing class 'urban_life': 100 images
+
+--- Vision Classification Report ---
+                   precision    recall  f1-score   support
+
+architecture_site       0.93      0.91      0.92       100
+            beach       0.99      0.99      0.99       100
+           forest       1.00      0.98      0.99       100
+         mountain       0.99      1.00      1.00       100
+       urban_life       0.90      0.93      0.92       100
+
+         accuracy                           0.96       500
+        macro avg       0.96      0.96      0.96       500
+     weighted avg       0.96      0.96      0.96       500
+
+Accuracy Score: 0.962
+
+Evaluation Complete. Results saved to evaluation_results/

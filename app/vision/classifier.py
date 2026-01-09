@@ -6,7 +6,7 @@ import os
 from typing import List, Dict
 
 class PlaceClassifier:
-    def __init__(self, model_path: str = None, num_classes: int = 6):
+    def __init__(self, model_path: str = 'artifacts/place_classifier.pth', num_classes: int = 5):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         # Load classes dynamically
