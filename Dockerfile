@@ -1,16 +1,16 @@
-# Base image
-FROM python:3.10-slim
+# Sử dụng image đầy đủ thay vì slim để có sẵn nhiều công cụ build
+FROM python:3.10
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
+# Cài đặt các thư viện hệ thống cần thiết cho OpenCV và các thư viện AI
+# Thêm các cờ để bỏ qua xác thực nếu mirror bị lỗi tạm thời
+RUN apt-get update --fix-missing && apt-get install -y --no-install-recommends \
     libgl1-mesa-glx \
     libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set work directory
 WORKDIR /app
