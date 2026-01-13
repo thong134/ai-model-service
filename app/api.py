@@ -64,6 +64,22 @@ def health():
         }
     })
 
+@app.route('/reload', methods=['POST'])
+def reload_models():
+    global dest_model, route_model
+    print("Reloading models...")
+    try:
+        from app.recommendation.destination import train_model as load_dest_model
+        dest_model = load_dest_model()
+        
+        from app.recommendation.route import RouteRecommender
+        if dest_model:
+            route_model = RouteRecommender(dest_model)
+            
+        return jsonify({"status": "success", "message": "Models reloaded"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/moderation/predict', methods=['POST'])
 def moderate_text():
     if not moderation_service:

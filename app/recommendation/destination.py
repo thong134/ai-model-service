@@ -133,9 +133,22 @@ class DestinationRecommender:
         if self.vectorizer and self.tfidf_matrix is not None:
             # Better Interest Text: Use target categories + hobbies
             interest_text = " ".join(list(target_categories) + user_hobbies)
+            
+            # Boost text from Behavior Profiles
             if history_profile:
-                 # Original Vietnamese terms might be in descriptions too
-                interest_text += " " + " ".join(history_profile.keys())
+                # Add categories from history (weighted by count?)
+                interest_text += " " + " ".join([cat for cat, count in history_profile.items() for _ in range(min(count, 3))])
+            
+            if engagement_profile:
+                interest_text += " " + " ".join([cat for cat, count in engagement_profile.items() for _ in range(min(count, 3))])
+
+            # CRITICAL: Add Favorites info to find SIMILAR items
+            if user_favorites:
+                fav_info = self.destinations[self.destinations['destinationId'].astype(str).isin(user_favorites)]
+                if not fav_info.empty:
+                    fav_names = " ".join(fav_info['name'].fillna(''))
+                    fav_cats = " ".join(fav_info['category'].fillna(''))
+                    interest_text += f" {fav_names} {fav_cats}"
             
             if interest_text.strip():
                 user_vec = self.vectorizer.transform([interest_text])
