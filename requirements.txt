@@ -1,6 +1,6 @@
 flask
 torch
-transformers
+torchvision
 underthesea
 emoji
 numpy
@@ -12,5 +12,4 @@ networkx
 requests
 gunicorn
 python-dotenv
-torchvision
 pillow

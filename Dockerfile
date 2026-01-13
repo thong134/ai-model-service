@@ -1,4 +1,4 @@
-# Sử dụng bản slim để nhẹ và tránh các lỗi apt-get không cần thiết
+# Sử dụng bản slim để nhẹ
 FROM python:3.10-slim
 
 # Set environment variables
@@ -9,7 +9,9 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Cài đặt Python dependencies
+# Ưu tiên cài đặt bản torch CPU-only để tiết kiệm RAM (giảm ~500MB+ so với bản thường)
 COPY requirements.txt .
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir gunicorn
 

@@ -7,74 +7,84 @@ from io import BytesIO
 
 app = Flask(__name__)
 
-# Initialize model variables
-dest_model = None
-route_model = None
-place_classifier = None
-moderation_service = None
+# Global model cache (Lazy Loading)
+_models = {
+    "dest": None,
+    "route": None,
+    "vision": None,
+    "moderation": None
+}
 
-# Load Models Separately
-print("Loading Destination Model...")
-try:
-    from app.recommendation.destination import train_model as load_dest_model
-    dest_model = load_dest_model()
-    print("  ✓ Destination Model loaded")
-except Exception as e:
-    print(f"  ✗ Destination Model failed: {e}")
+def get_dest_model():
+    if _models["dest"] is None:
+        print("Loading Destination Model (Lazy)...")
+        try:
+            from app.recommendation.destination import train_model as load_dest_model
+            _models["dest"] = load_dest_model()
+            print("  ✓ Destination Model loaded")
+        except Exception as e:
+            print(f"  ✗ Destination Model failed: {e}")
+    return _models["dest"]
 
-print("Loading Route Model...")
-try:
-    from app.recommendation.route import RouteRecommender
-    if dest_model:
-        route_model = RouteRecommender(dest_model)
-        print("  ✓ Route Model loaded")
-    else:
-        print("  ✗ Route Model skipped (requires Destination Model)")
-except Exception as e:
-    print(f"  ✗ Route Model failed: {e}")
+def get_route_model():
+    if _models["route"] is None:
+        dm = get_dest_model()
+        if dm:
+            print("Loading Route Model (Lazy)...")
+            try:
+                from app.recommendation.route import RouteRecommender
+                _models["route"] = RouteRecommender(dm)
+                print("  ✓ Route Model loaded")
+            except Exception as e:
+                print(f"  ✗ Route Model failed: {e}")
+    return _models["route"]
 
-print("Loading Place Classifier...")
-try:
-    from app.vision.classifier import PlaceClassifier
-    place_classifier = PlaceClassifier()
-    print("  ✓ Place Classifier loaded")
-except Exception as e:
-    print(f"  ✗ Place Classifier failed: {e}")
+def get_vision_model():
+    if _models["vision"] is None:
+        print("Loading Place Classifier (Lazy)...")
+        try:
+            from app.vision.classifier import PlaceClassifier
+            _models["vision"] = PlaceClassifier()
+            print("  ✓ Place Classifier loaded")
+        except Exception as e:
+            print(f"  ✗ Place Classifier failed: {e}")
+    return _models["vision"]
 
-print("Loading Moderation Service...")
-try:
-    from app.moderation.service import ReviewService
-    moderation_service = ReviewService()
-    moderation_service.load()
-    print("  ✓ Moderation Service loaded")
-except Exception as e:
-    print(f"  ✗ Moderation Service failed: {e}")
-
-print("Model loading complete.")
+def get_moderation_service():
+    if _models["moderation"] is None:
+        print("Loading Moderation Service (Lazy)...")
+        try:
+            from app.moderation.service import ReviewService
+            svc = ReviewService()
+            svc.load()
+            _models["moderation"] = svc
+            print("  ✓ Moderation Service loaded")
+        except Exception as e:
+            print(f"  ✗ Moderation Service failed: {e}")
+    return _models["moderation"]
 
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({
         "status": "ok",
         "services": {
-            "destination": dest_model is not None,
-            "route": route_model is not None,
-            "vision": place_classifier is not None,
-            "moderation": moderation_service is not None
+            "destination": _models["dest"] is not None,
+            "route": _models["route"] is not None,
+            "vision": _models["vision"] is not None,
+            "moderation": _models["moderation"] is not None
         }
     })
 
 @app.route('/reload', methods=['POST'])
 def reload_models():
-    global dest_model, route_model
     print("Reloading models...")
     try:
         from app.recommendation.destination import train_model as load_dest_model
-        dest_model = load_dest_model()
+        _models["dest"] = load_dest_model()
         
         from app.recommendation.route import RouteRecommender
-        if dest_model:
-            route_model = RouteRecommender(dest_model)
+        if _models["dest"]:
+            _models["route"] = RouteRecommender(_models["dest"])
             
         return jsonify({"status": "success", "message": "Models reloaded"}), 200
     except Exception as e:
@@ -82,7 +92,8 @@ def reload_models():
 
 @app.route('/moderation/predict', methods=['POST'])
 def moderate_text():
-    if not moderation_service:
+    svc = get_moderation_service()
+    if not svc:
         return jsonify({"error": "Moderation service not available"}), 503
         
     data = request.json
@@ -90,12 +101,13 @@ def moderate_text():
     if not text:
         return jsonify({"error": "No text provided"}), 400
         
-    result = moderation_service.score(text)
+    result = svc.score(text)
     return jsonify(result)
 
 @app.route('/recommend/destinations', methods=['POST'])
 def recommend_destinations():
-    if not dest_model:
+    model = get_dest_model()
+    if not model:
         return jsonify({"error": "Destination model not available"}), 503
         
     data = request.json
@@ -107,7 +119,7 @@ def recommend_destinations():
     top_n = data.get('limit', 50)
     offset = data.get('offset', 0)
     
-    results = dest_model.recommend(
+    results = model.recommend(
         user_hobbies=hobbies, 
         user_favorites=favorites, 
         history_profile=history_profile,
@@ -120,7 +132,8 @@ def recommend_destinations():
 
 @app.route('/recommend/destinations/inspect', methods=['POST'])
 def inspect_destinations():
-    if not dest_model:
+    model = get_dest_model()
+    if not model:
         return jsonify({"error": "Destination model not available"}), 503
         
     data = request.json
@@ -132,7 +145,7 @@ def inspect_destinations():
     top_n = data.get('limit', 50)
     offset = data.get('offset', 0)
     
-    results = dest_model.inspect(
+    results = model.inspect(
         user_hobbies=hobbies, 
         user_favorites=favorites, 
         history_profile=history_profile,
@@ -145,7 +158,8 @@ def inspect_destinations():
 
 @app.route('/recommend/route', methods=['POST'])
 def recommend_route():
-    if not route_model:
+    model = get_route_model()
+    if not model:
         return jsonify({"error": "Route model not available"}), 503
         
     data = request.json
@@ -166,7 +180,7 @@ def recommend_route():
     if not start_date or not end_date:
         return jsonify({"error": "startDate and endDate are required"}), 400
 
-    result = route_model.recommend_route(
+    result = model.recommend_route(
         user_hobbies=hobbies,
         user_favorites=favorites,
         province=province,
@@ -178,7 +192,8 @@ def recommend_route():
 
 @app.route('/vision/classify', methods=['POST'])
 def classify_place():
-    if not place_classifier:
+    classifier = get_vision_model()
+    if not classifier:
         return jsonify({"error": "Vision classifier not available"}), 503
     
     temp_path = None
@@ -200,7 +215,7 @@ def classify_place():
         else:
             return jsonify({"error": "No image provided (use 'image' file or 'imageUrl' in JSON)"}), 400
         
-        result = place_classifier.predict(temp_path)
+        result = classifier.predict(temp_path)
         return jsonify(result)
         
     except requests.RequestException as e:
