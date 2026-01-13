@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.env
+.git/
+.vscode/
+data/sample_destinations.csv
+logs/
+*.log
+artifacts/
+evaluation_results/
+results/
+temp_*

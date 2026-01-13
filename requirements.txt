@@ -9,8 +9,8 @@ scikit-learn
 joblib
 flasgger
 networkx
-fastapi
-uvicorn
-pydantic
+requests
+gunicorn
+python-dotenv
 torchvision
 pillow
