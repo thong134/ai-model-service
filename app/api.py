@@ -15,6 +15,25 @@ _models = {
     "moderation": None
 }
 
+@app.route('/', methods=['GET'])
+def index():
+    """Friendly root endpoint to confirm service is alive."""
+    return jsonify({
+        "service": "Traveline AI Model Service",
+        "status": "online",
+        "version": "1.1.0",
+        "documentation": "/health",
+        "endpoints": {
+            "health": "/health",
+            "reload": "/reload (POST)",
+            "destination_recommendations": "/recommend/destinations (POST)",
+            "route_recommendations": "/recommend/route (POST)",
+            "text_moderation": "/moderation/predict (POST)",
+            "vision_classification": "/vision/classify (POST)"
+        },
+        "message": "Welcome to the Traveline AI brain. Please use the documented API endpoints for interaction."
+    }), 200
+
 def get_dest_model():
     if _models["dest"] is None:
         print("Loading Destination Model (Lazy)...")
@@ -223,6 +242,10 @@ def classify_place():
     finally:
         if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)
+
+def create_app():
+    """Factory function for the Flask app."""
+    return app
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
