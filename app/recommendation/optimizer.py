@@ -95,6 +95,7 @@ def optimize_route(
     best_score = float("inf")
     best_time = float("inf")
 
+    fitness_history = []
     for _ in range(max(1, generations)):
         scored_population = []
         for route in population:
@@ -103,6 +104,7 @@ def optimize_route(
             if total_distance < best_score:
                 best_route, best_score, best_time = route, total_distance, total_time
 
+        fitness_history.append(best_score)
         scored_population.sort(key=lambda item: item[1])
         next_generation = [entry[0] for entry in scored_population[:elitism]]
 
@@ -131,6 +133,7 @@ def optimize_route(
         "mutation_rate": mutation_rate,
         "crossover_rate": crossover_rate,
         "max_time": max_time,
+        "fitness_history": fitness_history,
     }
     return RouteSolution(route=route_sequence, total_distance=total_distance, total_time=total_time, metadata=metadata)
 

@@ -1,0 +1,24 @@
+GENETIC ALGORITHM BENCHMARK RESULTS
+====================================
+
+Destinations: 10
+  GA Execution Time: 0.1124 seconds
+  GA Path Distance: 252.24 km
+  Random Search Avg Distance: 559.30 km
+  Relative Optimization (GA vs Random Avg): 54.90%
+  Relative Optimization (GA vs Random Best): 21.02%
+----------------------------------------
+Destinations: 20
+  GA Execution Time: 0.1794 seconds
+  GA Path Distance: 359.31 km
+  Random Search Avg Distance: 1151.16 km
+  Relative Optimization (GA vs Random Avg): 68.79%
+  Relative Optimization (GA vs Random Best): 54.25%
+----------------------------------------
+Destinations: 30
+  GA Execution Time: 0.2501 seconds
+  GA Path Distance: 505.42 km
+  Random Search Avg Distance: 1705.62 km
+  Relative Optimization (GA vs Random Avg): 70.37%
+  Relative Optimization (GA vs Random Best): 56.11%
+----------------------------------------
