@@ -8,16 +8,21 @@ from .rules import RuleEngine, RuleResult, build_default_rule_engine
 
 
 class ReviewService:
-    def __init__(self, config: Optional[AppConfig] = None, rule_engine: Optional[RuleEngine] = None):
-        self.config = config or AppConfig()
+    def __init__(self, rule_engine: Optional[RuleEngine] = None):
+        self.models: Dict[str, ModerationModel] = {
+            "vi": ModerationModel(AppConfig.for_lang("vi")),
+            "en": ModerationModel(AppConfig.for_lang("en")),
+        }
         self.rule_engine = rule_engine or build_default_rule_engine()
-        self.model = ModerationModel(self.config)
-        self._loaded = False
+        self._loaded_langs: set[str] = set()
 
-    def load(self) -> None:
-        if not self._loaded:
-            self.model.load()
-            self._loaded = True
+    def load(self, lang: str = "vi") -> None:
+        if lang not in self._loaded_langs:
+            if lang in self.models:
+                self.models[lang].load()
+                self._loaded_langs.add(lang)
+            else:
+                raise ValueError(f"Unsupported language: {lang}")
 
     def _probability(self, prediction: ModerationPrediction, head: str, label: str) -> float:
         mapping = {
@@ -28,8 +33,11 @@ class ReviewService:
         target = mapping[head]
         return ModerationModel.probability_for_label(target, label)
 
-    def _decide(self, toxicity: float, spam: float, rule_result: RuleResult) -> Tuple[str, List[str]]:
-        cfg = self.config.inference
+    def _decide(self, toxicity: float, spam: float, rule_result: RuleResult, lang: str = "vi") -> Tuple[str, List[str]]:
+        # For now use global config thresholds, but could be lang-specific
+        config = self.models[lang].config
+        cfg = config.inference
+        
         reasons: List[str] = list(rule_result.triggers)
         decision = "approve"
 
@@ -62,19 +70,27 @@ class ReviewService:
 
         return decision, deduped
 
-    def score(self, text: str) -> Dict[str, object]:
-        if not self._loaded:
-            self.load()
-        prediction = self.model.predict_one(text)
+    def score(self, text: str, lang: str = "vi") -> Dict[str, object]:
+        if lang not in self.models:
+            lang = "vi" # Fallback
+            
+        if lang not in self._loaded_langs:
+            self.load(lang)
+            
+        model = self.models[lang]
+        prediction = model.predict_one(text)
+        
+        # Rule engine is currently shared/global, or could be lang-specific too
         rule_result = self.rule_engine.evaluate(text)
 
         toxicity_score = self._probability(prediction, "toxicity", "toxic")
         spam_score = self._probability(prediction, "spam", "spam")
-        decision, reasons = self._decide(toxicity_score, spam_score, rule_result)
+        decision, reasons = self._decide(toxicity_score, spam_score, rule_result, lang)
 
         return {
             "decision": decision,
             "reasons": reasons,
+            "language": lang,
             "sentiment": {
                 "label": prediction.sentiment.label,
                 "confidence": float(prediction.sentiment.confidence),

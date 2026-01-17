@@ -35,17 +35,25 @@ def basic_clean(text: str) -> str:
     return text.strip()
 
 
-def tokenize(text: str) -> List[str]:
+def tokenize(text: str, lang: str = "vi") -> List[str]:
     cleaned = basic_clean(text)
     if not cleaned:
         return []
-    tokenized = word_tokenize(cleaned, format="text")
-    tokens = [token for token in tokenized.split(" ") if token]
+    if lang == "vi":
+        try:
+            tokenized = word_tokenize(cleaned, format="text")
+            tokens = [token for token in tokenized.split(" ") if token]
+        except Exception:
+            # Fallback if underthesea fails
+            tokens = [token for token in cleaned.split(" ") if token]
+    else:
+        # Simple whitespace tokenizer for English
+        tokens = [token for token in cleaned.split(" ") if token]
     return tokens
 
 
-def preprocess_for_vectorizer(text: str, strip_diacritics: bool = False) -> str:
-    tokens = tokenize(text)
+def preprocess_for_vectorizer(text: str, lang: str = "vi", strip_diacritics: bool = False) -> str:
+    tokens = tokenize(text, lang=lang)
     joined = " ".join(tokens)
     if strip_diacritics:
         joined = strip_accents(joined)
@@ -53,5 +61,9 @@ def preprocess_for_vectorizer(text: str, strip_diacritics: bool = False) -> str:
 
 
 def preprocess_for_tfidf(text: str) -> str:
-    """Helper exposed for pickled TF-IDF pipelines."""
-    return preprocess_for_vectorizer(text, strip_diacritics=False)
+    """Helper exposed for pickled VI TF-IDF pipelines."""
+    return preprocess_for_vectorizer(text, lang="vi", strip_diacritics=False)
+
+def preprocess_for_tfidf_en(text: str) -> str:
+    """Helper exposed for pickled EN TF-IDF pipelines."""
+    return preprocess_for_vectorizer(text, lang="en", strip_diacritics=False)

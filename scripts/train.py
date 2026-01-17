@@ -29,7 +29,7 @@ project_root = current_dir.parent
 if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 
-from app.moderation.data_processing import preprocess_for_tfidf
+from app.moderation.data_processing import preprocess_for_tfidf, preprocess_for_tfidf_en
 
 
 TEXT_COLUMN_CANDIDATES = ["comment", "text", "review", "content", "message", "body"]
@@ -105,10 +105,11 @@ def map_to_spam(label: str) -> str:
 
 
 class ModerationTrainer:
-    def __init__(self, artifacts_dir: Path, metrics_path: Path, logger: logging.Logger):
+    def __init__(self, artifacts_dir: Path, metrics_path: Path, logger: logging.Logger, lang: str = "vi"):
         self.artifacts_dir = artifacts_dir
         self.metrics_path = metrics_path
         self.logger = logger
+        self.lang = lang
         self.vectorizer: FeatureUnion | None = None
         self.head_models: Dict[str, LogisticRegression] = {}
         self.label_encoders: Dict[str, LabelEncoder] = {}
@@ -235,6 +236,8 @@ class ModerationTrainer:
         half_features = MAX_FEATURES // 2
         remainder = MAX_FEATURES - half_features
 
+        preprocessor = preprocess_for_tfidf if self.lang == "vi" else preprocess_for_tfidf_en
+
         word_vectorizer = TfidfVectorizer(
             analyzer="word",
             ngram_range=(1, 3),
@@ -242,7 +245,7 @@ class ModerationTrainer:
             tokenizer=str.split,
             token_pattern=None,
             lowercase=False,
-            preprocessor=preprocess_for_tfidf,
+            preprocessor=preprocessor,
         )
 
         char_vectorizer = TfidfVectorizer(
@@ -250,7 +253,7 @@ class ModerationTrainer:
             ngram_range=(1, 3),
             max_features=remainder,
             lowercase=False,
-            preprocessor=preprocess_for_tfidf,
+            preprocessor=preprocessor,
         )
 
         return FeatureUnion([("word", word_vectorizer), ("char", char_vectorizer)])
@@ -471,12 +474,8 @@ def parse_args() -> argparse.Namespace:
         default=Path("artifacts"),
         help="Directory to store trained artifacts",
     )
-    parser.add_argument(
-        "--metrics-path",
-        type=Path,
-        default=Path("artifacts/metrics.json"),
-        help="Where to store evaluation metrics",
-    )
+    parser.add_argument("--metrics-path", type=Path, default=None, help="Where to store evaluation metrics")
+    parser.add_argument("--lang", type=str, default="vi", choices=["vi", "en"], help="Language of the dataset")
     parser.add_argument("--verbose", action="store_true", help="Enable debug logging")
     return parser.parse_args()
 
@@ -488,9 +487,12 @@ def main() -> None:
 
     dataset_path = resolve_path(args.dataset, extra_roots=[project_root])
     artifacts_dir = resolve_path(args.artifacts_dir, extra_roots=[project_root], must_exist=False)
-    metrics_path = resolve_path(args.metrics_path, extra_roots=[project_root], must_exist=False)
+    if args.metrics_path is None:
+        metrics_path = artifacts_dir / "metrics.json"
+    else:
+        metrics_path = resolve_path(args.metrics_path, extra_roots=[project_root], must_exist=False)
 
-    trainer = ModerationTrainer(artifacts_dir=artifacts_dir, metrics_path=metrics_path, logger=logger)
+    trainer = ModerationTrainer(artifacts_dir=artifacts_dir, metrics_path=metrics_path, logger=logger, lang=args.lang)
     trainer.run_pipeline(dataset_path, args.text_column, args.label_column)
 
 

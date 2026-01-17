@@ -7,15 +7,29 @@ from typing import Tuple
 
 @dataclass
 class PathConfig:
+    lang: str = "vi"
     base_dir: Path = Path("artifacts")
-    vectorizer_path: Path = base_dir / "vectorizer.joblib"
-    sentiment_model_path: Path = base_dir / "model_sentiment.joblib"
-    sentiment_encoder_path: Path = base_dir / "encoder_sentiment.joblib"
-    toxicity_model_path: Path = base_dir / "model_toxicity.joblib"
-    toxicity_encoder_path: Path = base_dir / "encoder_toxicity.joblib"
-    spam_model_path: Path = base_dir / "model_spam.joblib"
-    spam_encoder_path: Path = base_dir / "encoder_spam.joblib"
-    metadata_path: Path = base_dir / "metadata.json"
+    
+    @property
+    def lang_dir(self) -> Path:
+        return self.base_dir / self.lang
+
+    @property
+    def vectorizer_path(self) -> Path: return self.lang_dir / "vectorizer.joblib"
+    @property
+    def sentiment_model_path(self) -> Path: return self.lang_dir / "model_sentiment.joblib"
+    @property
+    def sentiment_encoder_path(self) -> Path: return self.lang_dir / "encoder_sentiment.joblib"
+    @property
+    def toxicity_model_path(self) -> Path: return self.lang_dir / "model_toxicity.joblib"
+    @property
+    def toxicity_encoder_path(self) -> Path: return self.lang_dir / "encoder_toxicity.joblib"
+    @property
+    def spam_model_path(self) -> Path: return self.lang_dir / "model_spam.joblib"
+    @property
+    def spam_encoder_path(self) -> Path: return self.lang_dir / "encoder_spam.joblib"
+    @property
+    def metadata_path(self) -> Path: return self.lang_dir / "metadata.json"
 
 
 @dataclass
@@ -47,3 +61,7 @@ class AppConfig:
     paths: PathConfig = field(default_factory=PathConfig)
     training: TrainingConfig = field(default_factory=TrainingConfig)
     inference: InferenceConfig = field(default_factory=InferenceConfig)
+
+    @classmethod
+    def for_lang(cls, lang: str) -> AppConfig:
+        return cls(paths=PathConfig(lang=lang))

@@ -109,8 +109,10 @@ def reload_models():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-@app.route('/moderation/predict', methods=['POST'])
+@app.route('/moderation/predict/vi', methods=['POST'])
+@app.route('/moderation/predict/en', methods=['POST'])
 def moderate_text():
+    lang = request.path.split('/')[-1]
     svc = get_moderation_service()
     if not svc:
         return jsonify({"error": "Moderation service not available"}), 503
@@ -120,8 +122,13 @@ def moderate_text():
     if not text:
         return jsonify({"error": "No text provided"}), 400
         
-    result = svc.score(text)
+    result = svc.score(text, lang=lang)
     return jsonify(result)
+
+@app.route('/moderation/predict', methods=['POST'])
+def moderate_text_legacy():
+    # Legacy endpoint defaults to Vietnamese
+    return moderate_text()
 
 @app.route('/recommend/destinations', methods=['POST'])
 def recommend_destinations():

@@ -61,6 +61,7 @@ class RuleEngine:
 
 
 DEFAULT_PROFANITY = [
+    # Vietnamese
     "đm",
     "đmm",
     "địt",
@@ -76,6 +77,21 @@ DEFAULT_PROFANITY = [
     "ngu",
     "ngu si",
     "toxic",
+    # English
+    "fuck",
+    "fucking",
+    "shit",
+    "bitch",
+    "asshole",
+    "dick",
+    "pussy",
+    "cunt",
+    "bastard",
+    "idiot",
+    "stupid",
+    "loser",
+    "suck",
+    "sux",
 ]
 
 DEFAULT_SUSPICION = [
@@ -87,6 +103,10 @@ DEFAULT_SUSPICION = [
     "giảm giá",
     "khuyến mãi",
     "free",
+    "buy now",
+    "click here",
+    "cash prize",
+    "win now",
 ]
 
 
