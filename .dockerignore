@@ -9,7 +9,6 @@ venv/
 data/sample_destinations.csv
 logs/
 *.log
-artifacts/
 evaluation_results/
 results/
 temp_*
