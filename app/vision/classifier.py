@@ -6,17 +6,22 @@ import os
 from typing import List, Dict
 
 class PlaceClassifier:
-    def __init__(self, model_path: str = 'artifacts/place_classifier.pth', num_classes: int = 5):
+    def __init__(self, model_path: str = None, num_classes: int = 5):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
+        # Get absolute path to artifacts directory
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        if model_path is None:
+            model_path = os.path.join(base_dir, 'artifacts', 'place_classifier.pth')
+            
         # Load classes dynamically
         import json
-        classes_path = 'artifacts/classes.json'
+        classes_path = os.path.join(base_dir, 'artifacts', 'classes.json')
         if os.path.exists(classes_path):
             with open(classes_path, 'r') as f:
                 self.classes = json.load(f)
         else:
-            # Fallback (User should retrain to match their folders)
+            # Fallback
             self.classes = ['beach', 'mountain', 'temple', 'urban', 'forest', 'historical']
             
         self.num_classes = len(self.classes)
