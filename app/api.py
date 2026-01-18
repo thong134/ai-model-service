@@ -43,6 +43,7 @@ def get_dest_model():
             print("  ✓ Destination Model loaded")
         except Exception as e:
             print(f"  ✗ Destination Model failed: {e}")
+            _init_errors["dest"] = str(e)
     return _models["dest"]
 
 def get_route_model():
@@ -56,6 +57,9 @@ def get_route_model():
                 print("  ✓ Route Model loaded")
             except Exception as e:
                 print(f"  ✗ Route Model failed: {e}")
+                _init_errors["route"] = str(e)
+        else:
+             _init_errors["route"] = "Dependency 'dest' model failed to load."
     return _models["route"]
 
 def get_vision_model():
@@ -67,6 +71,7 @@ def get_vision_model():
             print("  ✓ Place Classifier loaded")
         except Exception as e:
             print(f"  ✗ Place Classifier failed: {e}")
+            _init_errors["vision"] = str(e)
     return _models["vision"]
 
 def get_moderation_service():
@@ -80,6 +85,7 @@ def get_moderation_service():
             print("  ✓ Moderation Service loaded")
         except Exception as e:
             print(f"  ✗ Moderation Service failed: {e}")
+            _init_errors["moderation"] = str(e)
     return _models["moderation"]
 
 @app.route('/health', methods=['GET'])
@@ -91,12 +97,15 @@ def health():
             "route": _models["route"] is not None,
             "vision": _models["vision"] is not None,
             "moderation": _models["moderation"] is not None
-        }
+        },
+        "errors": _init_errors
     })
 
 @app.route('/reload', methods=['POST'])
 def reload_models():
     print("Reloading models...")
+    global _init_errors
+    _init_errors = {}
     try:
         from app.recommendation.destination import train_model as load_dest_model
         _models["dest"] = load_dest_model()
@@ -115,7 +124,8 @@ def moderate_text():
     lang = request.path.split('/')[-1]
     svc = get_moderation_service()
     if not svc:
-        return jsonify({"error": "Moderation service not available"}), 503
+        error_msg = _init_errors.get("moderation", "Moderation service not available")
+        return jsonify({"error": error_msg}), 503
         
     data = request.json
     text = data.get('text', '')
