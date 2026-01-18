@@ -14,6 +14,7 @@ _models = {
     "vision": None,
     "moderation": None
 }
+_init_errors = {}
 
 @app.route('/', methods=['GET'])
 def index():
