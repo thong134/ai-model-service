@@ -1,19 +1,4 @@
-from __future__ import annotations
-
-# Clean exports for the new AI service structure
-from .moderation.service import ReviewService
-from .recommendation.destination import DestinationRecommender, train_model as load_dest_model
-from .recommendation.route import RouteRecommender
-from .api import create_app
-try:
-    from .vision.classifier import PlaceClassifier
-except ImportError:
-    PlaceClassifier = None
-
-__all__ = [
-    "ReviewService",
-    "DestinationRecommender",
-    "load_dest_model",
-    "RouteRecommender",
-    "PlaceClassifier",
-]
+"""
+Traveline AI Service Application Package
+Keep this file minimal to allow Lazy Loading in api.py to work correctly.
+"""
